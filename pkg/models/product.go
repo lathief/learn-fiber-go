@@ -3,10 +3,12 @@ package models
 import "time"
 
 type Product struct {
-	ID          int64     `db:"id"`
-	Name        string    `db:"name"`
-	Description string    `db:"description"`
-	Price       float64   `db:"price"`
-	CreatedAt   time.Time `db:"created_at"`
-	UpdatedAt   time.Time `db:"updated_at"`
+	ID          int64     `db:"product_id"`
+	Name        string    `db:"product_name"`
+	Description string    `db:"product_description"`
+	Price       float64   `db:"product_price"`
+	CategoryId  int64     `db:"product_category_id"`
+	Category    Category  `db:"product_category"`
+	CreatedAt   time.Time `db:"product_created_at"`
+	UpdatedAt   time.Time `db:"product_updated_at"`
 }

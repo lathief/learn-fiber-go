@@ -3,8 +3,10 @@ package main
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
+	"github.com/lathief/learn-fiber-go/app/category"
 	"github.com/lathief/learn-fiber-go/app/product"
 	"github.com/lathief/learn-fiber-go/pkg/configs"
+	"github.com/lathief/learn-fiber-go/pkg/middleware"
 	"github.com/lathief/learn-fiber-go/pkg/utils"
 	"github.com/lathief/learn-fiber-go/platform/database"
 	"log"
@@ -23,8 +25,11 @@ func main() {
 		log.Fatal(err)
 	}
 	app := fiber.New(config)
+	middleware.FiberMiddleware(app)
 	productRouter := product.NewRouter(db)
 	productRouter.Handle(app)
+	categoryRouter := category.NewRouter(db)
+	categoryRouter.Handle(app)
 	// Build fiber connection URL
 	fiberConnURL, _ := utils.ConnectionURLBuilder("fiber")
 	// Run server
