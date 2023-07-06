@@ -14,6 +14,7 @@ func NewRouter(db *sqlx.DB) CategoryRouter {
 	return CategoryRouter{
 		CategoryController: &categoryController{
 			CategoryUseCase: &categoryUseCase{
+				ProductRepo:  repositories.NewProductRepository(db),
 				CategoryRepo: repositories.NewCategoryRepository(db),
 			},
 		},
@@ -23,4 +24,7 @@ func NewRouter(db *sqlx.DB) CategoryRouter {
 func (cr *CategoryRouter) Handle(router *fiber.App) {
 	router.Get("/category/:id", cr.CategoryController.GetCategoryById)
 	router.Post("/category", cr.CategoryController.CreateCategory)
+	router.Get("/category", cr.CategoryController.GetAllCategories)
+	router.Put("/category/:id", cr.CategoryController.UpdateCategory)
+	router.Delete("/category/:id", cr.CategoryController.DeleteCategory)
 }

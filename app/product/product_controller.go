@@ -2,6 +2,7 @@ package product
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/lathief/learn-fiber-go/app/dtos"
 	"github.com/lathief/learn-fiber-go/pkg/handlers"
 	"strconv"
 )
@@ -18,7 +19,7 @@ type ProductController interface {
 }
 
 func (p *productController) GetAllProducts(ctx *fiber.Ctx) error {
-	res, _ := p.ProductUseCase.GetAllProducts()
+	res := p.ProductUseCase.GetAllProducts()
 	return ctx.Status(res.Code).JSON(res)
 }
 func (p *productController) GetProductById(ctx *fiber.Ctx) error {
@@ -29,11 +30,11 @@ func (p *productController) GetProductById(ctx *fiber.Ctx) error {
 			Message: "Bad Request",
 		})
 	}
-	res, err := p.ProductUseCase.GetProductById(s)
+	res := p.ProductUseCase.GetProductById(s)
 	return ctx.Status(res.Code).JSON(res)
 }
 func (p *productController) CreateProduct(ctx *fiber.Ctx) error {
-	var productReq ProductDTO
+	var productReq dtos.ProductDTO
 	if err := ctx.BodyParser(&productReq); err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(handlers.GetResponse{
 			Code:    500,
@@ -51,7 +52,7 @@ func (p *productController) UpdateProduct(ctx *fiber.Ctx) error {
 			Message: "Bad Request",
 		})
 	}
-	var productReq ProductDTO
+	var productReq dtos.ProductDTO
 	if err = ctx.BodyParser(&productReq); err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(handlers.GetResponse{
 			Code:    500,
