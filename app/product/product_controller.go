@@ -2,7 +2,7 @@ package product
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/lathief/learn-fiber-go/app/dtos"
+	"github.com/lathief/learn-fiber-go/pkg/dtos"
 	"github.com/lathief/learn-fiber-go/pkg/handlers"
 	"strconv"
 )
@@ -25,7 +25,7 @@ func (p *productController) GetAllProducts(ctx *fiber.Ctx) error {
 func (p *productController) GetProductById(ctx *fiber.Ctx) error {
 	s, err := strconv.Atoi(ctx.Params("id"))
 	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(handlers.GetResponse{
+		return ctx.Status(fiber.StatusBadRequest).JSON(handlers.ReturnResponse{
 			Code:    400,
 			Message: "Bad Request",
 		})
@@ -36,7 +36,7 @@ func (p *productController) GetProductById(ctx *fiber.Ctx) error {
 func (p *productController) CreateProduct(ctx *fiber.Ctx) error {
 	var productReq dtos.ProductDTO
 	if err := ctx.BodyParser(&productReq); err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(handlers.GetResponse{
+		return ctx.Status(fiber.StatusInternalServerError).JSON(handlers.ReturnResponse{
 			Code:    500,
 			Message: "Internal Server Error: " + err.Error(),
 		})
@@ -47,14 +47,14 @@ func (p *productController) CreateProduct(ctx *fiber.Ctx) error {
 func (p *productController) UpdateProduct(ctx *fiber.Ctx) error {
 	id, err := strconv.Atoi(ctx.Params("id"))
 	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(handlers.GetResponse{
+		return ctx.Status(fiber.StatusBadRequest).JSON(handlers.ReturnResponse{
 			Code:    400,
 			Message: "Bad Request",
 		})
 	}
 	var productReq dtos.ProductDTO
 	if err = ctx.BodyParser(&productReq); err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(handlers.GetResponse{
+		return ctx.Status(fiber.StatusInternalServerError).JSON(handlers.ReturnResponse{
 			Code:    500,
 			Message: "Internal Server Error: " + err.Error(),
 		})
@@ -65,7 +65,7 @@ func (p *productController) UpdateProduct(ctx *fiber.Ctx) error {
 func (p *productController) DeleteProduct(ctx *fiber.Ctx) error {
 	id, err := strconv.Atoi(ctx.Params("id"))
 	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(handlers.GetResponse{
+		return ctx.Status(fiber.StatusBadRequest).JSON(handlers.ReturnResponse{
 			Code:    400,
 			Message: "Bad Request",
 		})
