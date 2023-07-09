@@ -2,9 +2,9 @@ package category
 
 import (
 	"database/sql"
-	"github.com/lathief/learn-fiber-go/pkg/dtos"
+	dtos2 "github.com/lathief/learn-fiber-go/app/dtos"
+	"github.com/lathief/learn-fiber-go/app/models"
 	"github.com/lathief/learn-fiber-go/pkg/handlers"
-	"github.com/lathief/learn-fiber-go/pkg/models"
 	"github.com/lathief/learn-fiber-go/pkg/repositories"
 	"strconv"
 )
@@ -16,8 +16,8 @@ type categoryUseCase struct {
 
 type CategoryUseCase interface {
 	GetCategoryById(id int) (handlers.ReturnResponse, error)
-	CreateCategory(category dtos.CategoryDTO) handlers.ReturnResponse
-	UpdateCategory(id int, category dtos.CategoryDTO) handlers.ReturnResponse
+	CreateCategory(category dtos2.CategoryDTO) handlers.ReturnResponse
+	UpdateCategory(id int, category dtos2.CategoryDTO) handlers.ReturnResponse
 	DeleteCategory(id int) handlers.ReturnResponse
 	GetAllCategories() handlers.ReturnResponse
 }
@@ -49,16 +49,16 @@ func (cu *categoryUseCase) GetCategoryById(id int) (handlers.ReturnResponse, err
 			Message: "Internal Server Error: " + err.Error(),
 		}, err
 	}
-	var products []dtos.ProductDTO
+	var products []dtos2.ProductDTO
 	for _, item := range categoryProducts {
-		products = append(products, dtos.ProductDTO{
+		products = append(products, dtos2.ProductDTO{
 			ID:          item.ID,
 			Name:        item.Name,
 			Description: item.Description,
 			Price:       item.Price,
 		})
 	}
-	var categoryDTO = dtos.CategoryDTO{
+	var categoryDTO = dtos2.CategoryDTO{
 		ID:          getCategory.ID,
 		Name:        getCategory.Name,
 		Description: getCategory.Description,
@@ -70,7 +70,7 @@ func (cu *categoryUseCase) GetCategoryById(id int) (handlers.ReturnResponse, err
 		Data:    categoryDTO,
 	}, nil
 }
-func (cu *categoryUseCase) CreateCategory(category dtos.CategoryDTO) handlers.ReturnResponse {
+func (cu *categoryUseCase) CreateCategory(category dtos2.CategoryDTO) handlers.ReturnResponse {
 	var categorySave models.Category
 	categorySave.Name = category.Name
 	categorySave.Description = category.Description
@@ -86,7 +86,7 @@ func (cu *categoryUseCase) CreateCategory(category dtos.CategoryDTO) handlers.Re
 		Message: "Success",
 	}
 }
-func (cu *categoryUseCase) UpdateCategory(id int, category dtos.CategoryDTO) handlers.ReturnResponse {
+func (cu *categoryUseCase) UpdateCategory(id int, category dtos2.CategoryDTO) handlers.ReturnResponse {
 	var categoryUpdate models.Category
 	categoryUpdate.ID = int64(id)
 	categoryUpdate.Name = category.Name
@@ -136,9 +136,9 @@ func (cu *categoryUseCase) GetAllCategories() handlers.ReturnResponse {
 			Message: "Internal Server Error: " + err.Error(),
 		}
 	}
-	var categoriesDTO []dtos.AllCategoryDTO
+	var categoriesDTO []dtos2.AllCategoryDTO
 	for _, item := range categories {
-		categoriesDTO = append(categoriesDTO, dtos.AllCategoryDTO{
+		categoriesDTO = append(categoriesDTO, dtos2.AllCategoryDTO{
 			ID:          item.ID,
 			Name:        item.Name,
 			Description: item.Description,

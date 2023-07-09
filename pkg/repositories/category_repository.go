@@ -3,7 +3,7 @@ package repositories
 import (
 	"database/sql"
 	"github.com/jmoiron/sqlx"
-	"github.com/lathief/learn-fiber-go/pkg/models"
+	"github.com/lathief/learn-fiber-go/app/models"
 )
 
 type CategoryRepository interface {

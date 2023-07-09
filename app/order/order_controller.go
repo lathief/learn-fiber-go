@@ -2,6 +2,7 @@ package order
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/lathief/learn-fiber-go/app/dtos"
 	"github.com/lathief/learn-fiber-go/pkg/handlers"
 	"strconv"
 )
@@ -18,6 +19,10 @@ type OrderController interface {
 	DeleteOrder(ctx *fiber.Ctx) error
 }
 
+func (oc orderController) GetAllOrders(ctx *fiber.Ctx) error {
+	res := oc.OrderUseCase.GetAllOrders()
+	return ctx.Status(res.Code).JSON(res)
+}
 func (oc orderController) GetOrderById(ctx *fiber.Ctx) error {
 	s, err := strconv.Atoi(ctx.Params("id"))
 	if err != nil {
@@ -31,13 +36,15 @@ func (oc orderController) GetOrderById(ctx *fiber.Ctx) error {
 }
 
 func (oc orderController) CreateOrder(ctx *fiber.Ctx) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (oc orderController) GetAllOrders(ctx *fiber.Ctx) error {
-	//TODO implement me
-	panic("implement me")
+	var orderReq dtos.OrderReqDTO
+	if err := ctx.BodyParser(&orderReq); err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(handlers.ReturnResponse{
+			Code:    500,
+			Message: "Internal Server Error: " + err.Error(),
+		})
+	}
+	res := oc.OrderUseCase.CreateOrder(orderReq)
+	return ctx.Status(res.Code).JSON(res)
 }
 
 func (oc orderController) UpdateOrder(ctx *fiber.Ctx) error {

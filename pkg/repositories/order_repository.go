@@ -1,18 +1,20 @@
 package repositories
 
 import (
-	"database/sql"
+	"errors"
+	"fmt"
 	"github.com/jmoiron/sqlx"
-	"github.com/lathief/learn-fiber-go/pkg/models"
+	"github.com/lathief/learn-fiber-go/app/models"
 )
 
 type orderRepository struct {
 	DB *sqlx.DB
 }
+
 type OrderRepository interface {
-	Create(order models.Order) error
+	Create(order models.Order, productsId []int64) error
 	GetAll() ([]models.Order, error)
-	GetById(id int64) (models.Order, error)
+	GetById(id int64) (products []models.Product, order models.Order, err error)
 	GetAllByProductId(productId int64) ([]models.Order, error)
 	GetAllByCustomerId(customerId int64) ([]models.Order, error)
 	Update(order models.Order) error
@@ -24,69 +26,91 @@ func NewOrderRepository(DB *sqlx.DB) OrderRepository {
 		DB: DB,
 	}
 }
-func (o *orderRepository) Create(order models.Order) error {
-	res, err := o.DB.NamedExec("INSERT INTO `order` (customer_id, product_id) VALUES (:customer_id, :product_id)", order)
+
+func (o *orderRepository) Create(order models.Order, productsId []int64) error {
+	tx, err := o.DB.Beginx()
 	if err != nil {
+		return err
+	}
+	res, err := tx.NamedExec("INSERT INTO `order` (user_id, status) VALUES (:user_id, :status)", order)
+	if err != nil {
+		fmt.Println("Error inserting order")
+		fmt.Println(err.Error())
+		RollbackErr := tx.Rollback()
+		if RollbackErr != nil {
+			return RollbackErr
+		}
 		return err
 	}
 	rowsAffected, _ := res.RowsAffected()
 	if rowsAffected == 0 {
-		return sql.ErrNoRows
+		RollbackErr := tx.Rollback()
+		if RollbackErr != nil {
+			return RollbackErr
+		}
+		return errors.New("insert order failed")
+	}
+	orderId, _ := res.LastInsertId()
+	fmt.Println(orderId)
+	for _, i := range productsId {
+		res, err = tx.Exec("INSERT INTO order_product (order_id, product_id) VALUES (?, ?)", orderId, i)
+		if err != nil {
+			fmt.Println("Error inserting order product")
+			RollbackErr := tx.Rollback()
+			if RollbackErr != nil {
+				return RollbackErr
+			}
+			return err
+		}
+		fmt.Println("Lanjut")
+		rowsAffected, _ = res.RowsAffected()
+		if rowsAffected == 0 {
+			RollbackErr := tx.Rollback()
+			if RollbackErr != nil {
+				return RollbackErr
+			}
+			return errors.New("insert order product failed")
+		}
+	}
+	if err = tx.Commit(); err != nil {
+		return err
 	}
 	return nil
 }
-
 func (o *orderRepository) GetAll() ([]models.Order, error) {
-	var category []models.Order
-	err := o.DB.Select(&category, `SELECT * FROM "order"`)
-	return category, err
+	var orders []models.Order
+	err := o.DB.Select(&orders, "SELECT * FROM `order`")
+	return orders, err
 }
-func (o *orderRepository) GetById(id int64) (models.Order, error) {
-	var order models.Order
-	err := o.DB.Get(&order, "SELECT * FROM `order` WHERE id = ?", id)
-	return order, err
+func (o *orderRepository) GetById(id int64) (products []models.Product, order models.Order, err error) {
+	rows, err := o.DB.Query(
+		"SELECT orders.*, products.* FROM order_product op INNER JOIN product AS products on op.product_id = products.id INNER JOIN `order` AS orders on op.order_id = orders.id WHERE orders.id = ?", id)
+	if err != nil {
+		return nil, models.Order{}, err
+	}
+	for rows.Next() {
+		var tmpProduct models.Product
+		err = rows.Scan(&order.ID, &order.UserId, &order.Status, &order.OrderDate, &order.CreatedAt, &order.UpdatedAt, &tmpProduct.ID, &tmpProduct.Name, &tmpProduct.Price, &tmpProduct.Description, &tmpProduct.CategoryId, &tmpProduct.CreatedAt, &tmpProduct.UpdatedAt)
+		if err != nil {
+			return nil, models.Order{}, err
+		}
+		products = append(products, tmpProduct)
+	}
+	return products, order, err
 }
 func (o *orderRepository) GetAllByProductId(productId int64) ([]models.Order, error) {
-	var order []models.Order
-	err := o.DB.Select(&order,
-		`SELECT * FROM "order" WHERE product_id = ?`, productId)
-	if err != nil {
-		return nil, err
-	}
-	return order, err
+	//TODO implement me
+	panic("implement me")
 }
 func (o *orderRepository) GetAllByCustomerId(customerId int64) ([]models.Order, error) {
-	var order []models.Order
-	err := o.DB.Select(&order,
-		`SELECT * FROM "order" WHERE customer_id = ?`, customerId)
-	if err != nil {
-		return nil, err
-	}
-	return order, err
+	//TODO implement me
+	panic("implement me")
 }
 func (o *orderRepository) Update(order models.Order) error {
-	res, err := o.DB.NamedExec(
-		`UPDATE "order" SET 
-				status=CASE WHEN:status IS NOT NULL AND LENGTH(:status) > 0 THEN :status ELSE status END,
-				product_id=:product_id WHERE id = :id`,
-		order)
-	if err != nil {
-		return err
-	}
-	rowsAffected, _ := res.RowsAffected()
-	if rowsAffected == 0 {
-		return sql.ErrNoRows
-	}
-	return nil
+	//TODO implement me
+	panic("implement me")
 }
 func (o *orderRepository) Delete(id int64) error {
-	res, err := o.DB.Exec(`DELETE FROM "order" WHERE id=?`, id)
-	if err != nil {
-		return err
-	}
-	rowsAffected, _ := res.RowsAffected()
-	if rowsAffected == 0 {
-		return sql.ErrNoRows
-	}
-	return nil
+	//TODO implement me
+	panic("implement me")
 }

@@ -3,7 +3,7 @@ package repositories
 import (
 	"database/sql"
 	"github.com/jmoiron/sqlx"
-	"github.com/lathief/learn-fiber-go/pkg/models"
+	"github.com/lathief/learn-fiber-go/app/models"
 )
 
 type productRepository struct {
@@ -15,7 +15,6 @@ type ProductRepository interface {
 	GetAll() ([]models.Product, error)
 	GetById(id int64) (models.Product, error)
 	GetAllByCategoryId(categoryId int64) ([]models.Product, error)
-	GetAllProductInOrderById(id int64) ([]models.Product, models.Order, error)
 	Update(product models.Product) error
 	Delete(id int64) error
 }
@@ -88,22 +87,4 @@ func (p *productRepository) GetAllByCategoryId(categoryId int64) ([]models.Produ
 		return nil, err
 	}
 	return product, err
-}
-func (p *productRepository) GetAllProductInOrderById(id int64) ([]models.Product, models.Order, error) {
-	var products []models.Product
-	var order models.Order
-	rows, err := p.DB.Query(
-		"SELECT orders.*, products.* FROM order_product op INNER JOIN product AS products on op.product_id = products.id INNER JOIN `order` AS orders on op.order_id = orders.id WHERE orders.id = ?", id)
-	if err != nil {
-		return nil, models.Order{}, err
-	}
-	for rows.Next() {
-		var tmpProduct models.Product
-		err = rows.Scan(&order.ID, &order.UserId, &order.Status, &order.OrderDate, &order.CreatedAt, &order.UpdatedAt, &tmpProduct.ID, &tmpProduct.Name, &tmpProduct.Price, &tmpProduct.Description, &tmpProduct.CategoryId, &tmpProduct.CreatedAt, &tmpProduct.UpdatedAt)
-		if err != nil {
-			return nil, models.Order{}, err
-		}
-		products = append(products, tmpProduct)
-	}
-	return products, order, err
 }

@@ -2,9 +2,9 @@ package product
 
 import (
 	"database/sql"
-	"github.com/lathief/learn-fiber-go/pkg/dtos"
+	dtos2 "github.com/lathief/learn-fiber-go/app/dtos"
+	"github.com/lathief/learn-fiber-go/app/models"
 	"github.com/lathief/learn-fiber-go/pkg/handlers"
-	"github.com/lathief/learn-fiber-go/pkg/models"
 	"github.com/lathief/learn-fiber-go/pkg/repositories"
 	"strconv"
 )
@@ -16,8 +16,8 @@ type productUseCase struct {
 type ProductUseCase interface {
 	GetAllProducts() handlers.ReturnResponse
 	GetProductById(id int) handlers.ReturnResponse
-	CreateProduct(product dtos.ProductDTO) handlers.ReturnResponse
-	UpdateProduct(id int, product dtos.ProductDTO) handlers.ReturnResponse
+	CreateProduct(product dtos2.ProductDTO) handlers.ReturnResponse
+	UpdateProduct(id int, product dtos2.ProductDTO) handlers.ReturnResponse
 	DeleteProduct(id int) handlers.ReturnResponse
 }
 
@@ -29,9 +29,9 @@ func (pu *productUseCase) GetAllProducts() handlers.ReturnResponse {
 			Message: "Internal Server Error: " + err.Error(),
 		}
 	}
-	var productsDTO []dtos.AllProductsDTO
+	var productsDTO []dtos2.AllProductsDTO
 	for _, product := range products {
-		productsDTO = append(productsDTO, dtos.AllProductsDTO{
+		productsDTO = append(productsDTO, dtos2.AllProductsDTO{
 			ID:          product.ID,
 			Name:        product.Name,
 			Price:       product.Price,
@@ -73,12 +73,12 @@ func (pu *productUseCase) GetProductById(id int) handlers.ReturnResponse {
 			Message: "Internal Server Error: " + err.Error(),
 		}
 	}
-	var productsDTO = dtos.ProductDTO{
+	var productsDTO = dtos2.ProductDTO{
 		ID:          product.ID,
 		Name:        product.Name,
 		Price:       product.Price,
 		Description: product.Description,
-		Category: dtos.CategoryDTO{
+		Category: dtos2.CategoryDTO{
 			Name:        categoryProduct.Name,
 			Description: categoryProduct.Description,
 		},
@@ -89,7 +89,7 @@ func (pu *productUseCase) GetProductById(id int) handlers.ReturnResponse {
 		Data:    productsDTO,
 	}
 }
-func (pu *productUseCase) CreateProduct(product dtos.ProductDTO) handlers.ReturnResponse {
+func (pu *productUseCase) CreateProduct(product dtos2.ProductDTO) handlers.ReturnResponse {
 	var productSave models.Product
 	productSave.Name = product.Name
 	productSave.Price = product.Price
@@ -107,7 +107,7 @@ func (pu *productUseCase) CreateProduct(product dtos.ProductDTO) handlers.Return
 		Message: "Success",
 	}
 }
-func (pu *productUseCase) UpdateProduct(id int, product dtos.ProductDTO) handlers.ReturnResponse {
+func (pu *productUseCase) UpdateProduct(id int, product dtos2.ProductDTO) handlers.ReturnResponse {
 	var productUpdate models.Product
 	productUpdate.ID = int64(id)
 	productUpdate.Name = product.Name

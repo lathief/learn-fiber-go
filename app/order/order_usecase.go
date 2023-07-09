@@ -1,32 +1,53 @@
 package order
 
 import (
-	"github.com/lathief/learn-fiber-go/pkg/dtos"
+	"github.com/lathief/learn-fiber-go/app/dtos"
+	"github.com/lathief/learn-fiber-go/app/models"
 	"github.com/lathief/learn-fiber-go/pkg/handlers"
 	"github.com/lathief/learn-fiber-go/pkg/repositories"
 )
 
 type orderUseCase struct {
 	ProductRepo  repositories.ProductRepository
-	CategoryRepo repositories.CategoryRepository
 	OrderRepo    repositories.OrderRepository
+	OrderProduct repositories.OrderProductRepository
 }
 
 type OrderUseCase interface {
 	GetAllOrders() handlers.ReturnResponse
 	GetOrderById(id int) handlers.ReturnResponse
-	CreateOrder(order dtos.OrderDTO) handlers.ReturnResponse
+	CreateOrder(order dtos.OrderReqDTO) handlers.ReturnResponse
 	UpdateOrder(id int, product dtos.OrderDTO) handlers.ReturnResponse
 	DeleteOrder(id int) handlers.ReturnResponse
 }
 
 func (ou orderUseCase) GetAllOrders() handlers.ReturnResponse {
-	//TODO implement me
-	panic("implement me")
+	orders, err := ou.OrderRepo.GetAll()
+	if err != nil {
+		return handlers.ReturnResponse{
+			Code:    500,
+			Message: "Internal Server Error: " + err.Error(),
+		}
+	}
+	var ordersDTO []dtos.AllOrderDTO
+	for _, order := range orders {
+		ordersDTO = append(ordersDTO, dtos.AllOrderDTO{
+			ID:        order.ID,
+			User:      order.UserId,
+			Status:    order.Status,
+			OrderDate: order.OrderDate,
+		})
+	}
+
+	return handlers.ReturnResponse{
+		Code:    200,
+		Message: "Success",
+		Data:    ordersDTO,
+	}
 }
 
 func (ou orderUseCase) GetOrderById(id int) handlers.ReturnResponse {
-	products, order, err := ou.ProductRepo.GetAllProductInOrderById(int64(id))
+	products, order, err := ou.OrderRepo.GetById(int64(id))
 	if err != nil {
 		return handlers.ReturnResponse{
 			Code:    500,
@@ -55,9 +76,21 @@ func (ou orderUseCase) GetOrderById(id int) handlers.ReturnResponse {
 	}
 }
 
-func (ou orderUseCase) CreateOrder(order dtos.OrderDTO) handlers.ReturnResponse {
-	//TODO implement me
-	panic("implement me")
+func (ou orderUseCase) CreateOrder(order dtos.OrderReqDTO) handlers.ReturnResponse {
+	var orderSave models.Order
+	orderSave.Status = order.Status
+	orderSave.UserId = order.UserId
+	err := ou.OrderRepo.Create(orderSave, order.ProductsId)
+	if err != nil {
+		return handlers.ReturnResponse{
+			Code:    500,
+			Message: "Internal Server Error: " + err.Error(),
+		}
+	}
+	return handlers.ReturnResponse{
+		Code:    200,
+		Message: "Success",
+	}
 }
 
 func (ou orderUseCase) UpdateOrder(id int, product dtos.OrderDTO) handlers.ReturnResponse {

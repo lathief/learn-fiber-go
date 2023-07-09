@@ -2,7 +2,7 @@ package category
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/lathief/learn-fiber-go/pkg/dtos"
+	"github.com/lathief/learn-fiber-go/app/dtos"
 	"github.com/lathief/learn-fiber-go/pkg/handlers"
 	"strconv"
 )
