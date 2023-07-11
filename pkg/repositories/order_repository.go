@@ -15,10 +15,7 @@ type OrderRepository interface {
 	Create(order models.Order, productsId []int64) error
 	GetAll() ([]models.Order, error)
 	GetById(id int64) (products []models.Product, order models.Order, err error)
-	GetAllByProductId(productId int64) ([]models.Order, error)
 	GetAllByCustomerId(customerId int64) ([]models.Order, error)
-	Update(order models.Order) error
-	Delete(id int64) error
 }
 
 func NewOrderRepository(DB *sqlx.DB) OrderRepository {
@@ -98,19 +95,8 @@ func (o *orderRepository) GetById(id int64) (products []models.Product, order mo
 	}
 	return products, order, err
 }
-func (o *orderRepository) GetAllByProductId(productId int64) ([]models.Order, error) {
-	//TODO implement me
-	panic("implement me")
-}
 func (o *orderRepository) GetAllByCustomerId(customerId int64) ([]models.Order, error) {
-	//TODO implement me
-	panic("implement me")
-}
-func (o *orderRepository) Update(order models.Order) error {
-	//TODO implement me
-	panic("implement me")
-}
-func (o *orderRepository) Delete(id int64) error {
+	fmt.Println(customerId)
 	//TODO implement me
 	panic("implement me")
 }

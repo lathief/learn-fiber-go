@@ -1,0 +1,3 @@
+ALTER TABLE cart DROP CONSTRAINT cart_ibfk_1;
+ALTER TABLE `order` DROP CONSTRAINT order_ibfk_1;
+DROP TABLE IF EXISTS users;
