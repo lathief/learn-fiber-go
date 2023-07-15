@@ -16,6 +16,8 @@ func OpenDBConnection() (*sqlx.DB, error) {
 	switch dbType {
 	case "mysql":
 		db, err = MysqlConnection()
+	case "postgresql":
+		db, err = PostgreSQLConnection()
 	}
 
 	if err != nil {

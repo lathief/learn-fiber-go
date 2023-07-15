@@ -1,58 +1,46 @@
 package order
 
 import (
-	"github.com/lathief/learn-fiber-go/app/dtos"
-	"github.com/lathief/learn-fiber-go/app/models"
-	"github.com/lathief/learn-fiber-go/pkg/handlers"
+	"context"
+	"github.com/lathief/learn-fiber-go/pkg/dtos"
+	"github.com/lathief/learn-fiber-go/pkg/models"
 	"github.com/lathief/learn-fiber-go/pkg/repositories"
 )
 
 type orderUseCase struct {
-	ProductRepo  repositories.ProductRepository
-	OrderRepo    repositories.OrderRepository
-	OrderProduct repositories.OrderProductRepository
+	ProductRepo repositories.ProductRepository
+	OrderRepo   repositories.OrderRepository
 }
 
 type OrderUseCase interface {
-	GetAllOrders() handlers.ReturnResponse
-	GetOrderById(id int) handlers.ReturnResponse
-	CreateOrder(order dtos.OrderReqDTO) handlers.ReturnResponse
-	UpdateOrder(id int, product dtos.OrderDTO) handlers.ReturnResponse
-	DeleteOrder(id int) handlers.ReturnResponse
+	GetAllOrders(ctx context.Context) (ordersDTO []dtos.AllOrderDTO, err error)
+	GetOrderById(ctx context.Context, id int) (orderDTO dtos.OrderDTO, err error)
+	CreateOrder(ctx context.Context, order dtos.OrderReqDTO) (err error)
+	UpdateOrder(ctx context.Context, id int, product dtos.OrderDTO) (err error)
+	DeleteOrder(ctx context.Context, id int) (err error)
 }
 
-func (ou orderUseCase) GetAllOrders() handlers.ReturnResponse {
-	orders, err := ou.OrderRepo.GetAll()
+func (ou *orderUseCase) GetAllOrders(ctx context.Context) (ordersDTO []dtos.AllOrderDTO, err error) {
+	orders, err := ou.OrderRepo.GetAll(ctx)
 	if err != nil {
-		return handlers.ReturnResponse{
-			Code:    500,
-			Message: "Internal Server Error: " + err.Error(),
-		}
+		return nil, err
 	}
-	var ordersDTO []dtos.AllOrderDTO
 	for _, order := range orders {
 		ordersDTO = append(ordersDTO, dtos.AllOrderDTO{
-			ID:        order.ID,
-			User:      order.UserId,
-			Status:    order.Status,
-			OrderDate: order.OrderDate,
+			ID:         order.ID,
+			User:       order.UserId,
+			Status:     order.Status,
+			TotalPrice: order.TotalPrice,
+			OrderDate:  order.OrderDate,
 		})
 	}
-
-	return handlers.ReturnResponse{
-		Code:    200,
-		Message: "Success",
-		Data:    ordersDTO,
-	}
+	return ordersDTO, err
 }
 
-func (ou orderUseCase) GetOrderById(id int) handlers.ReturnResponse {
-	products, order, err := ou.OrderRepo.GetById(int64(id))
+func (ou *orderUseCase) GetOrderById(ctx context.Context, id int) (orderDTO dtos.OrderDTO, err error) {
+	products, order, err := ou.OrderRepo.GetById(ctx, int64(id))
 	if err != nil {
-		return handlers.ReturnResponse{
-			Code:    500,
-			Message: "Internal Server Error: " + err.Error(),
-		}
+		return dtos.OrderDTO{}, err
 	}
 	var sliceProducts []dtos.ProductDTO
 	for _, item := range products {
@@ -62,43 +50,31 @@ func (ou orderUseCase) GetOrderById(id int) handlers.ReturnResponse {
 			Price:       item.Price,
 		})
 	}
-	res := dtos.OrderDTO{
-		ID:        order.ID,
-		UserId:    order.UserId,
-		Products:  sliceProducts,
-		Status:    order.Status,
-		OrderDate: order.OrderDate,
+	orderDTO = dtos.OrderDTO{
+		ID:         order.ID,
+		UserId:     order.UserId,
+		Products:   sliceProducts,
+		Status:     order.Status,
+		TotalPrice: order.TotalPrice,
+		OrderDate:  order.OrderDate,
 	}
-	return handlers.ReturnResponse{
-		Code:    200,
-		Message: "Success",
-		Data:    res,
-	}
+	return orderDTO, nil
 }
 
-func (ou orderUseCase) CreateOrder(order dtos.OrderReqDTO) handlers.ReturnResponse {
+func (ou *orderUseCase) CreateOrder(ctx context.Context, order dtos.OrderReqDTO) (err error) {
 	var orderSave models.Order
 	orderSave.Status = order.Status
 	orderSave.UserId = order.UserId
-	err := ou.OrderRepo.Create(orderSave, order.ProductsId)
-	if err != nil {
-		return handlers.ReturnResponse{
-			Code:    500,
-			Message: "Internal Server Error: " + err.Error(),
-		}
-	}
-	return handlers.ReturnResponse{
-		Code:    200,
-		Message: "Success",
-	}
+	err = ou.OrderRepo.Create(ctx, orderSave, order.ProductsId)
+	return err
 }
 
-func (ou orderUseCase) UpdateOrder(id int, product dtos.OrderDTO) handlers.ReturnResponse {
+func (ou *orderUseCase) UpdateOrder(ctx context.Context, id int, product dtos.OrderDTO) (err error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (ou orderUseCase) DeleteOrder(id int) handlers.ReturnResponse {
+func (ou *orderUseCase) DeleteOrder(ctx context.Context, id int) (err error) {
 	//TODO implement me
 	panic("implement me")
 }

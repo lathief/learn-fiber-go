@@ -1,17 +1,18 @@
 package repositories
 
 import (
+	"context"
 	"database/sql"
 	"github.com/jmoiron/sqlx"
-	"github.com/lathief/learn-fiber-go/app/models"
+	"github.com/lathief/learn-fiber-go/pkg/models"
 )
 
 type CategoryRepository interface {
-	Create(category models.Category) error
-	GetAll() ([]models.Category, error)
-	GetById(id int64) (models.Category, error)
-	Update(product models.Category) error
-	Delete(id int64) error
+	Create(ctx context.Context, category models.Category) error
+	GetAll(ctx context.Context) ([]models.Category, error)
+	GetById(ctx context.Context, id int64) (models.Category, error)
+	Update(ctx context.Context, category models.Category) error
+	Delete(ctx context.Context, id int64) error
 }
 
 func NewCategoryRepository(DB *sqlx.DB) CategoryRepository {
@@ -24,8 +25,8 @@ type categoryRepository struct {
 	DB *sqlx.DB
 }
 
-func (c *categoryRepository) Create(category models.Category) error {
-	res, err := c.DB.NamedExec("INSERT INTO category (name, description) VALUES (:name, :description)", category)
+func (c *categoryRepository) Create(ctx context.Context, category models.Category) error {
+	res, err := c.DB.NamedExecContext(ctx, "INSERT INTO category (name, description) VALUES (:name, :description)", category)
 	if err != nil {
 		return err
 	}
@@ -36,20 +37,20 @@ func (c *categoryRepository) Create(category models.Category) error {
 	return nil
 }
 
-func (c *categoryRepository) GetAll() ([]models.Category, error) {
+func (c *categoryRepository) GetAll(ctx context.Context) ([]models.Category, error) {
 	var category []models.Category
-	err := c.DB.Select(&category, `SELECT * FROM category`)
+	err := c.DB.SelectContext(ctx, &category, `SELECT * FROM category`)
 	return category, err
 }
 
-func (c *categoryRepository) GetById(id int64) (models.Category, error) {
+func (c *categoryRepository) GetById(ctx context.Context, id int64) (models.Category, error) {
 	var category models.Category
-	err := c.DB.Get(&category, `SELECT * FROM category WHERE id = ?`, id)
+	err := c.DB.GetContext(ctx, &category, `SELECT * FROM category WHERE id = ?`, id)
 	return category, err
 }
 
-func (c *categoryRepository) Update(category models.Category) error {
-	res, err := c.DB.NamedExec(
+func (c *categoryRepository) Update(ctx context.Context, category models.Category) error {
+	res, err := c.DB.NamedExecContext(ctx,
 		`UPDATE category SET name=:name, 
 				description= CASE WHEN :description IS NOT NULL AND LENGTH(:description) > 0 THEN :description ELSE description END
 				WHERE id = :id`,
@@ -64,8 +65,8 @@ func (c *categoryRepository) Update(category models.Category) error {
 	return nil
 }
 
-func (c *categoryRepository) Delete(id int64) error {
-	res, err := c.DB.Exec("DELETE FROM category WHERE id=?", id)
+func (c *categoryRepository) Delete(ctx context.Context, id int64) error {
+	res, err := c.DB.ExecContext(ctx, "DELETE FROM category WHERE id=?", id)
 	if err != nil {
 		return err
 	}

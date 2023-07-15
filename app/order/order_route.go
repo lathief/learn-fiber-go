@@ -14,9 +14,8 @@ func NewRouter(db *sqlx.DB) OrderRouter {
 	return OrderRouter{
 		OrderController: &orderController{
 			OrderUseCase: &orderUseCase{
-				ProductRepo:  repositories.NewProductRepository(db),
-				OrderRepo:    repositories.NewOrderRepository(db),
-				OrderProduct: repositories.NewOrderProductRepository(db),
+				ProductRepo: repositories.NewProductRepository(db),
+				OrderRepo:   repositories.NewOrderRepository(db),
 			},
 		},
 	}

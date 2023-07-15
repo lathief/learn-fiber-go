@@ -1,12 +1,10 @@
 package product
 
 import (
-	"database/sql"
-	dtos2 "github.com/lathief/learn-fiber-go/app/dtos"
-	"github.com/lathief/learn-fiber-go/app/models"
-	"github.com/lathief/learn-fiber-go/pkg/handlers"
+	"context"
+	"github.com/lathief/learn-fiber-go/pkg/dtos"
+	"github.com/lathief/learn-fiber-go/pkg/models"
 	"github.com/lathief/learn-fiber-go/pkg/repositories"
-	"strconv"
 )
 
 type productUseCase struct {
@@ -14,24 +12,20 @@ type productUseCase struct {
 	CategoryRepo repositories.CategoryRepository
 }
 type ProductUseCase interface {
-	GetAllProducts() handlers.ReturnResponse
-	GetProductById(id int) handlers.ReturnResponse
-	CreateProduct(product dtos2.ProductDTO) handlers.ReturnResponse
-	UpdateProduct(id int, product dtos2.ProductDTO) handlers.ReturnResponse
-	DeleteProduct(id int) handlers.ReturnResponse
+	GetAllProducts(ctx context.Context) (productsDTO []dtos.AllProductsDTO, err error)
+	GetProductById(ctx context.Context, id int) (productDTO dtos.ProductDTO, err error)
+	CreateProduct(ctx context.Context, product dtos.ProductDTO) (err error)
+	UpdateProduct(ctx context.Context, id int, product dtos.ProductDTO) (err error)
+	DeleteProduct(ctx context.Context, id int) (err error)
 }
 
-func (pu *productUseCase) GetAllProducts() handlers.ReturnResponse {
-	products, err := pu.ProductRepo.GetAll()
+func (pu *productUseCase) GetAllProducts(ctx context.Context) (productsDTO []dtos.AllProductsDTO, err error) {
+	products, err := pu.ProductRepo.GetAll(ctx)
 	if err != nil {
-		return handlers.ReturnResponse{
-			Code:    500,
-			Message: "Internal Server Error: " + err.Error(),
-		}
+		return nil, err
 	}
-	var productsDTO []dtos2.AllProductsDTO
 	for _, product := range products {
-		productsDTO = append(productsDTO, dtos2.AllProductsDTO{
+		productsDTO = append(productsDTO, dtos.AllProductsDTO{
 			ID:          product.ID,
 			Name:        product.Name,
 			Price:       product.Price,
@@ -39,115 +33,51 @@ func (pu *productUseCase) GetAllProducts() handlers.ReturnResponse {
 			CategoryId:  product.CategoryId,
 		})
 	}
-
-	return handlers.ReturnResponse{
-		Code:    200,
-		Message: "Success",
-		Data:    productsDTO,
-	}
+	return productsDTO, nil
 }
-func (pu *productUseCase) GetProductById(id int) handlers.ReturnResponse {
-	product, err := pu.ProductRepo.GetById(int64(id))
-	if err == sql.ErrNoRows {
-		return handlers.ReturnResponse{
-			Code:    404,
-			Message: "Not Found: Data Not Found With id " + strconv.Itoa(id),
-		}
-	}
+func (pu *productUseCase) GetProductById(ctx context.Context, id int) (productDTO dtos.ProductDTO, err error) {
+	product, err := pu.ProductRepo.GetById(ctx, int64(id))
 	if err != nil {
-		return handlers.ReturnResponse{
-			Code:    500,
-			Message: "Internal Server Error: " + err.Error(),
-		}
+		return dtos.ProductDTO{}, err
 	}
-	categoryProduct, err := pu.CategoryRepo.GetById(product.CategoryId)
-	if err == sql.ErrNoRows {
-		return handlers.ReturnResponse{
-			Code:    404,
-			Message: "Not Found: Data Not Found With id " + strconv.Itoa(id),
-		}
-	}
+	categoryProduct, err := pu.CategoryRepo.GetById(ctx, product.CategoryId)
 	if err != nil {
-		return handlers.ReturnResponse{
-			Code:    500,
-			Message: "Internal Server Error: " + err.Error(),
-		}
+		return dtos.ProductDTO{}, err
 	}
-	var productsDTO = dtos2.ProductDTO{
+	productDTO = dtos.ProductDTO{
 		ID:          product.ID,
 		Name:        product.Name,
 		Price:       product.Price,
 		Description: product.Description,
-		Category: dtos2.CategoryDTO{
+		Category: dtos.CategoryDTO{
 			Name:        categoryProduct.Name,
 			Description: categoryProduct.Description,
 		},
 	}
-	return handlers.ReturnResponse{
-		Code:    200,
-		Message: "Success",
-		Data:    productsDTO,
-	}
+	return productDTO, nil
 }
-func (pu *productUseCase) CreateProduct(product dtos2.ProductDTO) handlers.ReturnResponse {
+func (pu *productUseCase) CreateProduct(ctx context.Context, product dtos.ProductDTO) (err error) {
 	var productSave models.Product
 	productSave.Name = product.Name
 	productSave.Price = product.Price
 	productSave.Description = product.Description
 	productSave.CategoryId = product.CategoryId
-	err := pu.ProductRepo.Create(productSave)
-	if err != nil {
-		return handlers.ReturnResponse{
-			Code:    500,
-			Message: "Internal Server Error: " + err.Error(),
-		}
-	}
-	return handlers.ReturnResponse{
-		Code:    200,
-		Message: "Success",
-	}
+
+	err = pu.ProductRepo.Create(ctx, productSave)
+	return err
 }
-func (pu *productUseCase) UpdateProduct(id int, product dtos2.ProductDTO) handlers.ReturnResponse {
+func (pu *productUseCase) UpdateProduct(ctx context.Context, id int, product dtos.ProductDTO) (err error) {
 	var productUpdate models.Product
 	productUpdate.ID = int64(id)
 	productUpdate.Name = product.Name
 	productUpdate.Price = product.Price
 	productUpdate.Description = product.Description
 	productUpdate.CategoryId = product.CategoryId
-	err := pu.ProductRepo.Update(productUpdate)
-	if err == sql.ErrNoRows {
-		return handlers.ReturnResponse{
-			Code:    404,
-			Message: "Not Found: Data Not Found With id " + strconv.Itoa(id),
-		}
-	}
-	if err != nil {
-		return handlers.ReturnResponse{
-			Code:    500,
-			Message: "Internal Server Error: " + err.Error(),
-		}
-	}
-	return handlers.ReturnResponse{
-		Code:    200,
-		Message: "Success",
-	}
+
+	err = pu.ProductRepo.Update(ctx, productUpdate)
+	return err
 }
-func (pu *productUseCase) DeleteProduct(id int) handlers.ReturnResponse {
-	err := pu.ProductRepo.Delete(int64(id))
-	if err == sql.ErrNoRows {
-		return handlers.ReturnResponse{
-			Code:    404,
-			Message: "Not Found: Data Not Found With id " + strconv.Itoa(id),
-		}
-	}
-	if err != nil {
-		return handlers.ReturnResponse{
-			Code:    500,
-			Message: "Internal Server Error: " + err.Error(),
-		}
-	}
-	return handlers.ReturnResponse{
-		Code:    200,
-		Message: "Success",
-	}
+func (pu *productUseCase) DeleteProduct(ctx context.Context, id int) (err error) {
+	err = pu.ProductRepo.Delete(ctx, int64(id))
+	return err
 }

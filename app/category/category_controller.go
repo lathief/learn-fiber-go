@@ -1,9 +1,13 @@
 package category
 
 import (
+	"database/sql"
+	"errors"
 	"github.com/gofiber/fiber/v2"
-	"github.com/lathief/learn-fiber-go/app/dtos"
+	"github.com/lathief/learn-fiber-go/pkg/constant"
+	"github.com/lathief/learn-fiber-go/pkg/dtos"
 	"github.com/lathief/learn-fiber-go/pkg/handlers"
+	"net/http"
 	"strconv"
 )
 
@@ -21,65 +25,64 @@ type CategoryController interface {
 func (cc *categoryController) GetCategoryById(ctx *fiber.Ctx) error {
 	s, err := strconv.Atoi(ctx.Params("id"))
 	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(handlers.ReturnResponse{
-			Code:    400,
-			Message: "Bad Request",
-		})
+		return handlers.HandleResponse(ctx, err.Error(), http.StatusBadRequest)
 	}
-	Category, err := cc.CategoryUseCase.GetCategoryById(s)
+	data, err := cc.CategoryUseCase.GetCategoryById(ctx.Context(), s)
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		return handlers.HandleResponse(ctx, constant.ErrCategoryNotFound.Error(), http.StatusNotFound)
+	}
 	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(handlers.ReturnResponse{
-			Code:    500,
-			Message: "Internal Server Error: " + err.Error(),
-		})
+		return handlers.HandleResponse(ctx, err.Error(), http.StatusInternalServerError)
 	}
-	return ctx.Status(fiber.StatusOK).JSON(handlers.ReturnResponse{
-		Code:    200,
-		Message: "Success",
-		Data:    Category,
-	})
+	return handlers.HandleResponseWithData(ctx, data, "Success", http.StatusOK)
 }
 func (cc *categoryController) CreateCategory(ctx *fiber.Ctx) error {
 	var categoryReq dtos.CategoryDTO
 	if err := ctx.BodyParser(&categoryReq); err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(handlers.ReturnResponse{
-			Code:    500,
-			Message: "Internal Server Error: " + err.Error(),
-		})
+		return handlers.HandleResponse(ctx, err.Error(), http.StatusInternalServerError)
 	}
-	res := cc.CategoryUseCase.CreateCategory(categoryReq)
-	return ctx.Status(res.Code).JSON(res)
+	err := cc.CategoryUseCase.CreateCategory(ctx.Context(), categoryReq)
+	if err != nil {
+		return handlers.HandleResponse(ctx, err.Error(), http.StatusInternalServerError)
+	}
+	return handlers.HandleResponse(ctx, "Success", http.StatusOK)
 }
 func (cc *categoryController) GetAllCategories(ctx *fiber.Ctx) error {
-	res := cc.CategoryUseCase.GetAllCategories()
-	return ctx.Status(res.Code).JSON(res)
+	data, err := cc.CategoryUseCase.GetAllCategories(ctx.Context())
+	if err != nil {
+		return handlers.HandleResponse(ctx, err.Error(), http.StatusInternalServerError)
+	}
+	return handlers.HandleResponseWithData(ctx, data, "Success", http.StatusOK)
 }
 func (cc *categoryController) UpdateCategory(ctx *fiber.Ctx) error {
 	s, err := strconv.Atoi(ctx.Params("id"))
 	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(handlers.ReturnResponse{
-			Code:    400,
-			Message: "Bad Request",
-		})
+		return handlers.HandleResponse(ctx, err.Error(), http.StatusBadRequest)
 	}
 	var categoryReq dtos.CategoryDTO
 	if err = ctx.BodyParser(&categoryReq); err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(handlers.ReturnResponse{
-			Code:    500,
-			Message: "Internal Server Error: " + err.Error(),
-		})
+		return handlers.HandleResponse(ctx, err.Error(), http.StatusInternalServerError)
 	}
-	res := cc.CategoryUseCase.UpdateCategory(s, categoryReq)
-	return ctx.Status(res.Code).JSON(res)
+	err = cc.CategoryUseCase.UpdateCategory(ctx.Context(), s, categoryReq)
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		return handlers.HandleResponse(ctx, constant.ErrCategoryNotFound.Error(), http.StatusNotFound)
+	}
+	if err != nil {
+		return handlers.HandleResponse(ctx, err.Error(), http.StatusInternalServerError)
+	}
+	return handlers.HandleResponse(ctx, "Success", http.StatusOK)
 }
 func (cc *categoryController) DeleteCategory(ctx *fiber.Ctx) error {
 	id, err := strconv.Atoi(ctx.Params("id"))
 	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(handlers.ReturnResponse{
-			Code:    400,
-			Message: "Bad Request",
-		})
+		return handlers.HandleResponse(ctx, err.Error(), http.StatusBadRequest)
 	}
-	res := cc.CategoryUseCase.DeleteCategory(id)
-	return ctx.Status(res.Code).JSON(res)
+	err = cc.CategoryUseCase.DeleteCategory(ctx.Context(), id)
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		return handlers.HandleResponse(ctx, constant.ErrCategoryNotFound.Error(), http.StatusNotFound)
+	}
+	if err != nil {
+		return handlers.HandleResponse(ctx, err.Error(), http.StatusInternalServerError)
+	}
+	return handlers.HandleResponse(ctx, "Success", http.StatusOK)
 }

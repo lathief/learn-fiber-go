@@ -43,15 +43,15 @@ func FiberMiddleware(app *fiber.App) {
 				fmt.Println(err.Error())
 				if errors.Is(err, errors.New("Method Not Allowed")) {
 					return c.Status(fiber.StatusMethodNotAllowed).JSON(handlers.ReturnResponse{
-						Code:    405,
-						Message: err.Error(),
+						StatusCode: 405,
+						Message:    err.Error(),
 					})
 				}
 				// Handle the error
 				fmt.Println("Error occurred:", err)
 				return c.Status(fiber.StatusInternalServerError).JSON(handlers.ReturnResponse{
-					Code:    500,
-					Message: err.Error(),
+					StatusCode: 500,
+					Message:    err.Error(),
 				})
 			}
 			return nil

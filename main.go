@@ -3,6 +3,8 @@ package main
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
+	"github.com/lathief/learn-fiber-go/app/auth"
+	"github.com/lathief/learn-fiber-go/app/cart"
 	"github.com/lathief/learn-fiber-go/app/category"
 	"github.com/lathief/learn-fiber-go/app/order"
 	"github.com/lathief/learn-fiber-go/app/product"
@@ -33,6 +35,11 @@ func main() {
 	categoryRouter.Handle(app)
 	orderRouter := order.NewRouter(db)
 	orderRouter.Handle(app)
+	cartRouter := cart.NewRouter(db)
+	cartRouter.Handle(app)
+	authRouter := auth.NewRouter(db)
+	authRouter.Handle(app)
+
 	// Build fiber connection URL
 	fiberConnURL, _ := utils.ConnectionURLBuilder("fiber")
 	// Run server

@@ -1,9 +1,13 @@
 package order
 
 import (
+	"database/sql"
+	"errors"
 	"github.com/gofiber/fiber/v2"
-	"github.com/lathief/learn-fiber-go/app/dtos"
+	"github.com/lathief/learn-fiber-go/pkg/constant"
+	"github.com/lathief/learn-fiber-go/pkg/dtos"
 	"github.com/lathief/learn-fiber-go/pkg/handlers"
+	"net/http"
 	"strconv"
 )
 
@@ -19,40 +23,47 @@ type OrderController interface {
 	DeleteOrder(ctx *fiber.Ctx) error
 }
 
-func (oc orderController) GetAllOrders(ctx *fiber.Ctx) error {
-	res := oc.OrderUseCase.GetAllOrders()
-	return ctx.Status(res.Code).JSON(res)
+func (oc *orderController) GetAllOrders(ctx *fiber.Ctx) error {
+	data, err := oc.OrderUseCase.GetAllOrders(ctx.Context())
+	if err != nil {
+		return handlers.HandleResponse(ctx, err.Error(), http.StatusInternalServerError)
+	}
+	return handlers.HandleResponseWithData(ctx, data, "Success", http.StatusOK)
 }
-func (oc orderController) GetOrderById(ctx *fiber.Ctx) error {
+func (oc *orderController) GetOrderById(ctx *fiber.Ctx) error {
 	s, err := strconv.Atoi(ctx.Params("id"))
 	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(handlers.ReturnResponse{
-			Code:    400,
-			Message: "Bad Request",
-		})
+		return handlers.HandleResponse(ctx, err.Error(), http.StatusBadRequest)
 	}
-	res := oc.OrderUseCase.GetOrderById(s)
-	return ctx.Status(res.Code).JSON(res)
+	data, err := oc.OrderUseCase.GetOrderById(ctx.Context(), s)
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		return handlers.HandleResponse(ctx, constant.ErrOrderNotFound.Error(), http.StatusNotFound)
+	}
+	if err != nil {
+		return handlers.HandleResponse(ctx, constant.JoinMsgError(constant.ErrInternalServerError, err.Error()),
+			http.StatusInternalServerError)
+	}
+	return handlers.HandleResponseWithData(ctx, data, "Success", http.StatusOK)
 }
 
-func (oc orderController) CreateOrder(ctx *fiber.Ctx) error {
+func (oc *orderController) CreateOrder(ctx *fiber.Ctx) error {
 	var orderReq dtos.OrderReqDTO
 	if err := ctx.BodyParser(&orderReq); err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(handlers.ReturnResponse{
-			Code:    500,
-			Message: "Internal Server Error: " + err.Error(),
-		})
+		return handlers.HandleResponse(ctx, err.Error(), http.StatusInternalServerError)
 	}
-	res := oc.OrderUseCase.CreateOrder(orderReq)
-	return ctx.Status(res.Code).JSON(res)
+	err := oc.OrderUseCase.CreateOrder(ctx.Context(), orderReq)
+	if err != nil {
+		return handlers.HandleResponse(ctx, err.Error(), http.StatusInternalServerError)
+	}
+	return handlers.HandleResponse(ctx, "Success", http.StatusOK)
 }
 
-func (oc orderController) UpdateOrder(ctx *fiber.Ctx) error {
+func (oc *orderController) UpdateOrder(ctx *fiber.Ctx) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (oc orderController) DeleteOrder(ctx *fiber.Ctx) error {
+func (oc *orderController) DeleteOrder(ctx *fiber.Ctx) error {
 	//TODO implement me
 	panic("implement me")
 }

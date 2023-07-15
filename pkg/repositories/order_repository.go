@@ -1,10 +1,12 @@
 package repositories
 
 import (
+	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/jmoiron/sqlx"
-	"github.com/lathief/learn-fiber-go/app/models"
+	"github.com/lathief/learn-fiber-go/pkg/models"
 )
 
 type orderRepository struct {
@@ -12,10 +14,10 @@ type orderRepository struct {
 }
 
 type OrderRepository interface {
-	Create(order models.Order, productsId []int64) error
-	GetAll() ([]models.Order, error)
-	GetById(id int64) (products []models.Product, order models.Order, err error)
-	GetAllByCustomerId(customerId int64) ([]models.Order, error)
+	Create(ctx context.Context, order models.Order, productsId []int64) error
+	GetAll(ctx context.Context) ([]models.Order, error)
+	GetById(ctx context.Context, id int64) (products []models.Product, order models.Order, err error)
+	GetAllByUserId(ctx context.Context, id int64) (models.Order, error)
 }
 
 func NewOrderRepository(DB *sqlx.DB) OrderRepository {
@@ -24,12 +26,17 @@ func NewOrderRepository(DB *sqlx.DB) OrderRepository {
 	}
 }
 
-func (o *orderRepository) Create(order models.Order, productsId []int64) error {
-	tx, err := o.DB.Beginx()
+func (o *orderRepository) Create(ctx context.Context, order models.Order, productsId []int64) error {
+	tx, err := o.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
-	res, err := tx.NamedExec("INSERT INTO `order` (user_id, status) VALUES (:user_id, :status)", order)
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+	res, err := tx.ExecContext(ctx, "INSERT INTO `order` (user_id, status) VALUES (?, ?)", order.UserId, order.Status)
 	if err != nil {
 		fmt.Println("Error inserting order")
 		fmt.Println(err.Error())
@@ -50,7 +57,7 @@ func (o *orderRepository) Create(order models.Order, productsId []int64) error {
 	orderId, _ := res.LastInsertId()
 	fmt.Println(orderId)
 	for _, i := range productsId {
-		res, err = tx.Exec("INSERT INTO order_product (order_id, product_id) VALUES (?, ?)", orderId, i)
+		res, err = tx.ExecContext(ctx, "INSERT INTO order_items (order_id, product_id) VALUES (?, ?)", orderId, i)
 		if err != nil {
 			fmt.Println("Error inserting order product")
 			RollbackErr := tx.Rollback()
@@ -74,20 +81,23 @@ func (o *orderRepository) Create(order models.Order, productsId []int64) error {
 	}
 	return nil
 }
-func (o *orderRepository) GetAll() ([]models.Order, error) {
+func (o *orderRepository) GetAll(ctx context.Context) ([]models.Order, error) {
 	var orders []models.Order
-	err := o.DB.Select(&orders, "SELECT * FROM `order`")
+	err := o.DB.SelectContext(ctx, &orders, "SELECT * FROM `order`")
 	return orders, err
 }
-func (o *orderRepository) GetById(id int64) (products []models.Product, order models.Order, err error) {
-	rows, err := o.DB.Query(
-		"SELECT orders.*, products.* FROM order_product op INNER JOIN product AS products on op.product_id = products.id INNER JOIN `order` AS orders on op.order_id = orders.id WHERE orders.id = ?", id)
+func (o *orderRepository) GetById(ctx context.Context, id int64) (products []models.Product, order models.Order, err error) {
+	rows, err := o.DB.QueryContext(ctx,
+		"SELECT orders.*, products.* FROM order_items op INNER JOIN product AS products on op.product_id = products.id INNER JOIN `order` AS orders on op.order_id = orders.id WHERE orders.id = ?", id)
 	if err != nil {
 		return nil, models.Order{}, err
 	}
+	if !rows.Next() {
+		return nil, models.Order{}, sql.ErrNoRows
+	}
 	for rows.Next() {
 		var tmpProduct models.Product
-		err = rows.Scan(&order.ID, &order.UserId, &order.Status, &order.OrderDate, &order.CreatedAt, &order.UpdatedAt, &tmpProduct.ID, &tmpProduct.Name, &tmpProduct.Price, &tmpProduct.Description, &tmpProduct.CategoryId, &tmpProduct.CreatedAt, &tmpProduct.UpdatedAt)
+		err = rows.Scan(&order.ID, &order.UserId, &order.Status, &order.TotalPrice, &order.OrderDate, &order.CreatedAt, &order.UpdatedAt, &tmpProduct.ID, &tmpProduct.Name, &tmpProduct.Price, &tmpProduct.Description, &tmpProduct.CategoryId, &tmpProduct.CreatedAt, &tmpProduct.UpdatedAt)
 		if err != nil {
 			return nil, models.Order{}, err
 		}
@@ -95,8 +105,8 @@ func (o *orderRepository) GetById(id int64) (products []models.Product, order mo
 	}
 	return products, order, err
 }
-func (o *orderRepository) GetAllByCustomerId(customerId int64) ([]models.Order, error) {
-	fmt.Println(customerId)
-	//TODO implement me
-	panic("implement me")
+func (o *orderRepository) GetAllByUserId(ctx context.Context, id int64) (models.Order, error) {
+	var order models.Order
+	err := o.DB.GetContext(ctx, &order, "SELECT * FROM `order` WHERE id = ?", id)
+	return order, err
 }

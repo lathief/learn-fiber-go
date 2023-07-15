@@ -1,12 +1,10 @@
 package category
 
 import (
-	"database/sql"
-	dtos2 "github.com/lathief/learn-fiber-go/app/dtos"
-	"github.com/lathief/learn-fiber-go/app/models"
-	"github.com/lathief/learn-fiber-go/pkg/handlers"
+	"context"
+	"github.com/lathief/learn-fiber-go/pkg/dtos"
+	"github.com/lathief/learn-fiber-go/pkg/models"
 	"github.com/lathief/learn-fiber-go/pkg/repositories"
-	"strconv"
 )
 
 type categoryUseCase struct {
@@ -15,139 +13,70 @@ type categoryUseCase struct {
 }
 
 type CategoryUseCase interface {
-	GetCategoryById(id int) (handlers.ReturnResponse, error)
-	CreateCategory(category dtos2.CategoryDTO) handlers.ReturnResponse
-	UpdateCategory(id int, category dtos2.CategoryDTO) handlers.ReturnResponse
-	DeleteCategory(id int) handlers.ReturnResponse
-	GetAllCategories() handlers.ReturnResponse
+	GetCategoryById(ctx context.Context, id int) (categoryDTO dtos.CategoryDTO, err error)
+	CreateCategory(ctx context.Context, category dtos.CategoryDTO) (err error)
+	UpdateCategory(ctx context.Context, id int, category dtos.CategoryDTO) (err error)
+	DeleteCategory(ctx context.Context, id int) (err error)
+	GetAllCategories(ctx context.Context) (categoriesDTO []dtos.AllCategoryDTO, err error)
 }
 
-func (cu *categoryUseCase) GetCategoryById(id int) (handlers.ReturnResponse, error) {
-	getCategory, err := cu.CategoryRepo.GetById(int64(id))
-	if err == sql.ErrNoRows {
-		return handlers.ReturnResponse{
-			Code:    404,
-			Message: "Not Found: Data Not Found With id " + strconv.Itoa(id),
-		}, err
-	}
+func (cu *categoryUseCase) GetCategoryById(ctx context.Context, id int) (categoryDTO dtos.CategoryDTO, err error) {
+	getCategory, err := cu.CategoryRepo.GetById(ctx, int64(id))
 	if err != nil {
-		return handlers.ReturnResponse{
-			Code:    500,
-			Message: "Internal Server Error: " + err.Error(),
-		}, err
+		return dtos.CategoryDTO{}, err
 	}
-	categoryProducts, err := cu.ProductRepo.GetAllByCategoryId(getCategory.ID)
-	if err == sql.ErrNoRows {
-		return handlers.ReturnResponse{
-			Code:    404,
-			Message: "Not Found: Data Not Found With id " + strconv.Itoa(id),
-		}, err
-	}
+	categoryProducts, err := cu.ProductRepo.GetAllByCategoryId(ctx, getCategory.ID)
 	if err != nil {
-		return handlers.ReturnResponse{
-			Code:    500,
-			Message: "Internal Server Error: " + err.Error(),
-		}, err
+		return dtos.CategoryDTO{}, err
 	}
-	var products []dtos2.ProductDTO
+	var products []dtos.ProductDTO
 	for _, item := range categoryProducts {
-		products = append(products, dtos2.ProductDTO{
+		products = append(products, dtos.ProductDTO{
 			ID:          item.ID,
 			Name:        item.Name,
 			Description: item.Description,
 			Price:       item.Price,
 		})
 	}
-	var categoryDTO = dtos2.CategoryDTO{
+	categoryDTO = dtos.CategoryDTO{
 		ID:          getCategory.ID,
 		Name:        getCategory.Name,
 		Description: getCategory.Description,
 		Products:    products,
 	}
-	return handlers.ReturnResponse{
-		Code:    200,
-		Message: "Success",
-		Data:    categoryDTO,
-	}, nil
+	return categoryDTO, nil
 }
-func (cu *categoryUseCase) CreateCategory(category dtos2.CategoryDTO) handlers.ReturnResponse {
+func (cu *categoryUseCase) CreateCategory(ctx context.Context, category dtos.CategoryDTO) (err error) {
 	var categorySave models.Category
 	categorySave.Name = category.Name
 	categorySave.Description = category.Description
-	err := cu.CategoryRepo.Create(categorySave)
-	if err != nil {
-		return handlers.ReturnResponse{
-			Code:    500,
-			Message: "Internal Server Error: " + err.Error(),
-		}
-	}
-	return handlers.ReturnResponse{
-		Code:    200,
-		Message: "Success",
-	}
+	err = cu.CategoryRepo.Create(ctx, categorySave)
+	return err
 }
-func (cu *categoryUseCase) UpdateCategory(id int, category dtos2.CategoryDTO) handlers.ReturnResponse {
+func (cu *categoryUseCase) UpdateCategory(ctx context.Context, id int, category dtos.CategoryDTO) (err error) {
 	var categoryUpdate models.Category
 	categoryUpdate.ID = int64(id)
 	categoryUpdate.Name = category.Name
 	categoryUpdate.Description = category.Description
-	err := cu.CategoryRepo.Update(categoryUpdate)
-	if err == sql.ErrNoRows {
-		return handlers.ReturnResponse{
-			Code:    404,
-			Message: "Not Found: Data Not Found With id " + strconv.Itoa(id),
-		}
-	}
-	if err != nil {
-		return handlers.ReturnResponse{
-			Code:    500,
-			Message: "Internal Server Error: " + err.Error(),
-		}
-	}
-	return handlers.ReturnResponse{
-		Code:    200,
-		Message: "Success",
-	}
+	err = cu.CategoryRepo.Update(ctx, categoryUpdate)
+	return err
 }
-func (cu *categoryUseCase) DeleteCategory(id int) handlers.ReturnResponse {
-	err := cu.CategoryRepo.Delete(int64(id))
-	if err == sql.ErrNoRows {
-		return handlers.ReturnResponse{
-			Code:    404,
-			Message: "Not Found: Data Not Found With id " + strconv.Itoa(id),
-		}
-	}
-	if err != nil {
-		return handlers.ReturnResponse{
-			Code:    500,
-			Message: "Internal Server Error: " + err.Error(),
-		}
-	}
-	return handlers.ReturnResponse{
-		Code:    200,
-		Message: "Success",
-	}
+func (cu *categoryUseCase) DeleteCategory(ctx context.Context, id int) (err error) {
+	err = cu.CategoryRepo.Delete(ctx, int64(id))
+	return err
 }
-func (cu *categoryUseCase) GetAllCategories() handlers.ReturnResponse {
-	categories, err := cu.CategoryRepo.GetAll()
+func (cu *categoryUseCase) GetAllCategories(ctx context.Context) (categoriesDTO []dtos.AllCategoryDTO, err error) {
+	categories, err := cu.CategoryRepo.GetAll(ctx)
 	if err != nil {
-		return handlers.ReturnResponse{
-			Code:    500,
-			Message: "Internal Server Error: " + err.Error(),
-		}
+		return nil, err
 	}
-	var categoriesDTO []dtos2.AllCategoryDTO
 	for _, item := range categories {
-		categoriesDTO = append(categoriesDTO, dtos2.AllCategoryDTO{
+		categoriesDTO = append(categoriesDTO, dtos.AllCategoryDTO{
 			ID:          item.ID,
 			Name:        item.Name,
 			Description: item.Description,
 		})
 	}
 
-	return handlers.ReturnResponse{
-		Code:    200,
-		Message: "Success",
-		Data:    categoriesDTO,
-	}
+	return categoriesDTO, nil
 }

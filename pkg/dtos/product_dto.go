@@ -16,3 +16,8 @@ type AllProductsDTO struct {
 	Price       float64 `json:"price"`
 	CategoryId  int64   `json:"category_id,omitempty"`
 }
+
+type Item struct {
+	ProductId int64 `json:"product_id"`
+	Quantity  int64 `json:"quantity"`
+}
