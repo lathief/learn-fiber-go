@@ -1,0 +1,1 @@
+DROP PROCEDURE IF EXISTS ecommerce_product.COUNT_PRICE

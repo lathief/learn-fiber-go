@@ -19,5 +19,5 @@ type AllProductsDTO struct {
 
 type Item struct {
 	ProductId int64 `json:"product_id"`
-	Quantity  int64 `json:"quantity"`
+	Quantity  int   `json:"quantity"`
 }

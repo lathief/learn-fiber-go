@@ -65,7 +65,15 @@ func (ou *orderUseCase) CreateOrder(ctx context.Context, order dtos.OrderReqDTO)
 	var orderSave models.Order
 	orderSave.Status = order.Status
 	orderSave.UserId = order.UserId
-	err = ou.OrderRepo.Create(ctx, orderSave, order.ProductsId)
+	var orderItems []models.OrderItems
+	for _, item := range order.Items {
+		orderItems = append(orderItems, models.OrderItems{
+			ProductId: item.ProductId,
+			Quantity:  item.Quantity,
+		})
+	}
+
+	err = ou.OrderRepo.Create(ctx, orderSave, orderItems)
 	return err
 }
 

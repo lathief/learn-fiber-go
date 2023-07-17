@@ -18,9 +18,9 @@ type AllOrderDTO struct {
 	OrderDate  time.Time `json:"orderDate"`
 }
 type OrderReqDTO struct {
-	ID         int64     `json:"id,omitempty"`
-	ProductsId []int64   `json:"products_id"`
-	UserId     int64     `json:"user_id"`
-	Status     string    `json:"status"`
-	OrderDate  time.Time `json:"orderDate"`
+	ID        int64     `json:"id,omitempty"`
+	Items     []Item    `json:"items"`
+	UserId    int64     `json:"user_id"`
+	Status    string    `json:"status"`
+	OrderDate time.Time `json:"orderDate"`
 }

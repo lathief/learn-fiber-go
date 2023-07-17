@@ -14,7 +14,7 @@ type orderRepository struct {
 }
 
 type OrderRepository interface {
-	Create(ctx context.Context, order models.Order, productsId []int64) error
+	Create(ctx context.Context, order models.Order, productItems []models.OrderItems) error
 	GetAll(ctx context.Context) ([]models.Order, error)
 	GetById(ctx context.Context, id int64) (products []models.Product, order models.Order, err error)
 	GetAllByUserId(ctx context.Context, id int64) (models.Order, error)
@@ -26,7 +26,7 @@ func NewOrderRepository(DB *sqlx.DB) OrderRepository {
 	}
 }
 
-func (o *orderRepository) Create(ctx context.Context, order models.Order, productsId []int64) error {
+func (o *orderRepository) Create(ctx context.Context, order models.Order, productItems []models.OrderItems) error {
 	tx, err := o.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -56,8 +56,8 @@ func (o *orderRepository) Create(ctx context.Context, order models.Order, produc
 	}
 	orderId, _ := res.LastInsertId()
 	fmt.Println(orderId)
-	for _, i := range productsId {
-		res, err = tx.ExecContext(ctx, "INSERT INTO order_items (order_id, product_id) VALUES (?, ?)", orderId, i)
+	for _, i := range productItems {
+		res, err = tx.ExecContext(ctx, "INSERT INTO order_items (order_id, product_id, quantity) VALUES (?, ?, ?)", orderId, i.ProductId, i.Quantity)
 		if err != nil {
 			fmt.Println("Error inserting order product")
 			RollbackErr := tx.Rollback()
@@ -75,6 +75,24 @@ func (o *orderRepository) Create(ctx context.Context, order models.Order, produc
 			}
 			return errors.New("insert order product failed")
 		}
+	}
+	fmt.Println("Lanjut")
+	res, err = tx.ExecContext(ctx, `CALL COUNT_PRICE(?)`, orderId)
+	if err != nil {
+		fmt.Println("Error exec sp count items")
+		RollbackErr := tx.Rollback()
+		if RollbackErr != nil {
+			return RollbackErr
+		}
+		return err
+	}
+	rowsAffected, _ = res.RowsAffected()
+	if rowsAffected == 0 {
+		RollbackErr := tx.Rollback()
+		if RollbackErr != nil {
+			return RollbackErr
+		}
+		return errors.New("Error exec sp count items")
 	}
 	if err = tx.Commit(); err != nil {
 		return err
