@@ -3,6 +3,7 @@ package auth
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
+	"github.com/lathief/learn-fiber-go/pkg/repositories"
 )
 
 type AuthRouter struct {
@@ -12,7 +13,11 @@ type AuthRouter struct {
 func NewRouter(db *sqlx.DB) AuthRouter {
 	return AuthRouter{
 		AuthController: &authController{
-			AuthUseCase: &authUseCase{},
+			AuthUseCase: &authUseCase{
+				UserRepo: repositories.NewUserRepository(db),
+				RoleRepo: repositories.NewRoleRepository(db),
+				CartRepo: repositories.NewCartRepository(db),
+			},
 		},
 	}
 }

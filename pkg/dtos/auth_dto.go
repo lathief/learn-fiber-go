@@ -2,6 +2,7 @@ package dtos
 
 type LoginDTO struct {
 	Username string `json:"username"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 type RegisterDTO struct {
@@ -10,7 +11,9 @@ type RegisterDTO struct {
 	LastName  string `json:"last_name"`
 	Email     string `json:"email"`
 	Password  string `json:"password"`
+	RoleName  string `json:"role_name"`
 }
 type TokenAuth struct {
-	Token string `json:"token"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
 }

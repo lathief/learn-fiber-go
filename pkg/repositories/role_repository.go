@@ -15,6 +15,7 @@ type RoleRepository interface {
 	Create(ctx context.Context, role models.Role) error
 	GetAll(ctx context.Context) ([]models.Role, error)
 	GetById(ctx context.Context, id int64) (models.Role, error)
+	GetByName(ctx context.Context, name string) (models.Role, error)
 	Update(ctx context.Context, role models.Role) error
 	Delete(ctx context.Context, id int64) error
 }
@@ -52,7 +53,15 @@ func (r *roleRepository) GetById(ctx context.Context, id int64) (models.Role, er
 	}
 	return role, err
 }
-
+func (r *roleRepository) GetByName(ctx context.Context, name string) (models.Role, error) {
+	var role models.Role
+	err := r.DB.GetContext(ctx, &role,
+		`SELECT * FROM roles WHERE role_name = ?`, name)
+	if err != nil {
+		return models.Role{}, err
+	}
+	return role, err
+}
 func (r *roleRepository) Update(ctx context.Context, role models.Role) error {
 	res, err := r.DB.NamedExecContext(ctx,
 		`UPDATE category SET name=:name, 

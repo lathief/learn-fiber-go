@@ -8,6 +8,7 @@ var (
 	ErrProductNotFound     = fmt.Errorf("Product not found")
 	ErrOrderNotFound       = fmt.Errorf("Order not found")
 	ErrCategoryNotFound    = fmt.Errorf("Category not found")
+	ErrCartNotFound        = fmt.Errorf("Cart not found")
 	ErrUserNotFound        = fmt.Errorf("User not found")
 	ErrRoleNotFound        = fmt.Errorf("Role not found")
 	ErrUsernameExists      = fmt.Errorf("Username has been used")

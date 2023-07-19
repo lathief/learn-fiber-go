@@ -14,17 +14,14 @@ func NewRouter(db *sqlx.DB) CartRouter {
 	return CartRouter{
 		CartController: &cartController{
 			CartUseCase: &cartUseCase{
-				ProductRepo:  repositories.NewProductRepository(db),
-				CategoryRepo: repositories.NewCategoryRepository(db),
+				CartRepo: repositories.NewCartRepository(db),
 			},
 		},
 	}
 }
 
 func (cr *CartRouter) Handle(router *fiber.App) {
-	router.Get("/cart/:id", cr.CartController.GetCartById)
-	router.Post("/cart", cr.CartController.CreateCart)
-	router.Get("/cart", cr.CartController.GetAllCarts)
-	router.Put("/cart/:id", cr.CartController.UpdateCart)
-	router.Delete("/cart/:id", cr.CartController.DeleteCart)
+	router.Get("/cart/:userid", cr.CartController.GetCartByUserId)
+	router.Put("/cart", cr.CartController.UpdateProductCart)
+	router.Delete("/cart", cr.CartController.DeleteProductCart)
 }

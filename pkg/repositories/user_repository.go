@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"github.com/jmoiron/sqlx"
 	"github.com/lathief/learn-fiber-go/pkg/models"
 )
@@ -12,7 +13,7 @@ type userRepository struct {
 }
 
 type UserRepository interface {
-	Create(ctx context.Context, user models.User) error
+	Create(ctx context.Context, user models.User) (int64, error)
 	GetAll(ctx context.Context) ([]models.User, error)
 	GetById(ctx context.Context, id int64) (models.User, error)
 	GetByEmail(ctx context.Context, email string) (models.User, error)
@@ -27,16 +28,20 @@ func NewUserRepository(DB *sqlx.DB) UserRepository {
 	}
 }
 
-func (u *userRepository) Create(ctx context.Context, user models.User) error {
+func (u *userRepository) Create(ctx context.Context, user models.User) (int64, error) {
 	res, err := u.DB.NamedExecContext(ctx, "INSERT INTO users (username, first_name, last_name, email, password, phone_number, address, role_id) VALUES (:username, :first_name, :last_name, :email, :password, :phone_number, :address, :role_id)", user)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	rowsAffected, _ := res.RowsAffected()
 	if rowsAffected == 0 {
-		return sql.ErrNoRows
+		return 0, errors.New("Rows not affected")
 	}
-	return nil
+	userId, err := res.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+	return userId, nil
 }
 
 func (u *userRepository) GetAll(ctx context.Context) ([]models.User, error) {

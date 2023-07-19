@@ -7,7 +7,6 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
-	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/lathief/learn-fiber-go/pkg/handlers"
 	"os"
 	"time"
@@ -29,12 +28,7 @@ func FiberMiddleware(app *fiber.App) {
 			TimeInterval: 500 * time.Millisecond,
 			Output:       os.Stdout,
 		}),
-		// You can make own panic handler and save panic log to file with StackTraceHandler
-		recover.New(
-			recover.Config{
-				EnableStackTrace: true,
-			},
-		),
+
 		// Error Handling Middleware
 		func(c *fiber.Ctx) error {
 			err := c.Next()
@@ -56,5 +50,12 @@ func FiberMiddleware(app *fiber.App) {
 			}
 			return nil
 		},
+		// You can make own panic handler and save panic log to file with StackTraceHandler
+		//recover.New(
+		//	recover.Config{
+		//		EnableStackTrace:  true,
+		//		StackTraceHandler: handlers.PanicHandler,
+		//	},
+		//),
 	)
 }

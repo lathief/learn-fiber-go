@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/lathief/learn-fiber-go/pkg/constant"
 	"github.com/lathief/learn-fiber-go/pkg/utils"
 )
 
@@ -16,7 +17,7 @@ func HandleResponse(ctx *fiber.Ctx, message string, statusCode int) error {
 		StatusCode: statusCode,
 		Message:    message,
 	}
-	utils.JoinString(GetStatusMsg(statusCode), message)
+	utils.JoinStringWithColon(constant.GetStatusMsg(statusCode), message)
 	return ctx.Status(statusCode).JSON(res)
 }
 func HandleResponseWithData(ctx *fiber.Ctx, data interface{}, message string, statusCode int) error {
@@ -25,7 +26,7 @@ func HandleResponseWithData(ctx *fiber.Ctx, data interface{}, message string, st
 		Message:    message,
 		Data:       data,
 	}
-	utils.JoinString(GetStatusMsg(statusCode), message)
+	utils.JoinStringWithColon(constant.GetStatusMsg(statusCode), message)
 	return ctx.Status(statusCode).JSON(res)
 }
 func HandleJustStatusCode(ctx *fiber.Ctx, statusCode int) error {
