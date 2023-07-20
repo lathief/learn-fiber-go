@@ -8,6 +8,7 @@ import (
 	"github.com/lathief/learn-fiber-go/pkg/models"
 	"github.com/lathief/learn-fiber-go/pkg/repositories"
 	"github.com/lathief/learn-fiber-go/pkg/utils"
+	"strconv"
 )
 
 type authUseCase struct {
@@ -19,7 +20,7 @@ type authUseCase struct {
 type AuthUseCase interface {
 	Register(ctx context.Context, newUser dtos.RegisterDTO) (err error)
 	Login(ctx context.Context, auth dtos.LoginDTO) (token dtos.TokenAuth, err error)
-	Whoami(ctx context.Context, token string) (dtos.UserDTO, error)
+	Whoami(ctx context.Context, userId string) (dtos.UserDTO, error)
 }
 
 func (a *authUseCase) Register(ctx context.Context, newUser dtos.RegisterDTO) (err error) {
@@ -100,7 +101,20 @@ func (a *authUseCase) Login(ctx context.Context, auth dtos.LoginDTO) (token dtos
 	}, nil
 }
 
-func (a *authUseCase) Whoami(ctx context.Context, token string) (dtos.UserDTO, error) {
-	//TODO implement me
-	panic("implement me")
+func (a *authUseCase) Whoami(ctx context.Context, userId string) (dtos.UserDTO, error) {
+	var getUser models.User
+	id, err := strconv.Atoi(userId)
+	if err != nil {
+		return dtos.UserDTO{}, err
+	}
+	getUser, err = a.UserRepo.GetById(ctx, int64(id))
+	if err != nil {
+		return dtos.UserDTO{}, err
+	}
+	return dtos.UserDTO{
+		ID:        getUser.ID,
+		FirstName: getUser.FirstName,
+		LastName:  getUser.LastName,
+		Email:     getUser.Email,
+	}, nil
 }

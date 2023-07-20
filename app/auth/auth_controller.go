@@ -43,11 +43,7 @@ func (a *authController) Register(ctx *fiber.Ctx) error {
 }
 
 func (a *authController) Whoami(ctx *fiber.Ctx) error {
-	var tokenReq dtos.TokenAuth
-	if err := ctx.BodyParser(&tokenReq); err != nil {
-		return handlers.HandleResponse(ctx, err.Error(), http.StatusInternalServerError)
-	}
-	user, err := a.AuthUseCase.Whoami(ctx.Context(), tokenReq.AccessToken)
+	user, err := a.AuthUseCase.Whoami(ctx.Context(), ctx.Locals("userId").(string))
 	if err != nil {
 		return handlers.HandleResponse(ctx, err.Error(), http.StatusInternalServerError)
 	}
