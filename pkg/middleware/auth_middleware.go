@@ -27,7 +27,7 @@ func NewSecurityRepo(DB *sqlx.DB) SecurityInterface {
 func (s *Security) Authentication(c *fiber.Ctx) error {
 	verifyToken, err := utils.VerifyAccessToken(c)
 	if err != nil {
-		return handlers.HandleResponse(c, constant.GetStatusMsg(http.StatusUnauthorized), http.StatusUnauthorized)
+		return handlers.HandleResponse(c, utils.JoinStringWithColon(constant.GetStatusMsg(http.StatusUnauthorized), err.Error()), http.StatusUnauthorized)
 	}
 	token := verifyToken.(jwt.MapClaims)
 	userId := int(token["id"].(float64))
