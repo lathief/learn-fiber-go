@@ -21,11 +21,12 @@ type CartController interface {
 }
 
 func (cc *cartController) GetCartByUserId(ctx *fiber.Ctx) error {
-	s, err := strconv.Atoi(ctx.Params("userid"))
+	userId := ctx.Locals("userId").(string)
+	id, err := strconv.Atoi(userId)
 	if err != nil {
-		return handlers.HandleResponse(ctx, err.Error(), http.StatusBadRequest)
+		return handlers.HandleResponse(ctx, constant.ErrInternalServerError.Error(), http.StatusInternalServerError)
 	}
-	data, err := cc.CartUseCase.GetCartByUserId(ctx.Context(), s)
+	data, err := cc.CartUseCase.GetCartByUserId(ctx.Context(), id)
 	if err != nil && errors.Is(err, sql.ErrNoRows) {
 		return handlers.HandleResponse(ctx, constant.ErrCartNotFound.Error(), http.StatusNotFound)
 	}
@@ -37,14 +38,15 @@ func (cc *cartController) GetCartByUserId(ctx *fiber.Ctx) error {
 
 func (cc *cartController) UpdateProductCart(ctx *fiber.Ctx) error {
 	var items dtos.Item
-	var userId int
 	if err := ctx.BodyParser(&items); err != nil {
 		return handlers.HandleResponse(ctx, err.Error(), http.StatusInternalServerError)
 	}
-	err := cc.CartUseCase.UpdateProductInCart(ctx.Context(), userId, items)
-	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		return handlers.HandleResponse(ctx, constant.ErrCategoryNotFound.Error(), http.StatusNotFound)
+	userId := ctx.Locals("userId").(string)
+	id, err := strconv.Atoi(userId)
+	if err != nil {
+		return handlers.HandleResponse(ctx, constant.ErrInternalServerError.Error(), http.StatusInternalServerError)
 	}
+	err = cc.CartUseCase.UpdateProductInCart(ctx.Context(), id, items)
 	if err != nil {
 		return handlers.HandleResponse(ctx, err.Error(), http.StatusInternalServerError)
 	}
@@ -53,14 +55,15 @@ func (cc *cartController) UpdateProductCart(ctx *fiber.Ctx) error {
 
 func (cc *cartController) DeleteProductCart(ctx *fiber.Ctx) error {
 	var items dtos.CartProductIdDTO
-	var userId int
 	if err := ctx.BodyParser(&items); err != nil {
 		return handlers.HandleResponse(ctx, err.Error(), http.StatusInternalServerError)
 	}
-	err := cc.CartUseCase.DeleteProductsInCart(ctx.Context(), userId, items)
-	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		return handlers.HandleResponse(ctx, constant.ErrCategoryNotFound.Error(), http.StatusNotFound)
+	userId := ctx.Locals("userId").(string)
+	id, err := strconv.Atoi(userId)
+	if err != nil {
+		return handlers.HandleResponse(ctx, constant.ErrInternalServerError.Error(), http.StatusInternalServerError)
 	}
+	err = cc.CartUseCase.DeleteProductsInCart(ctx.Context(), id, items)
 	if err != nil {
 		return handlers.HandleResponse(ctx, err.Error(), http.StatusInternalServerError)
 	}

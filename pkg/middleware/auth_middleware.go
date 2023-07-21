@@ -17,6 +17,7 @@ type Security struct {
 }
 type SecurityInterface interface {
 	Authentication(c *fiber.Ctx) error
+	Authorization(c *fiber.Ctx) error
 }
 
 func NewSecurityRepo(DB *sqlx.DB) SecurityInterface {
@@ -40,4 +41,9 @@ func (s *Security) Authentication(c *fiber.Ctx) error {
 	c.Locals("userId", strconv.Itoa(userId))
 	c.Locals("username", userName)
 	return c.Next()
+}
+
+func (s *Security) Authorization(c *fiber.Ctx) error {
+	//TODO implement me
+	panic("implement me")
 }

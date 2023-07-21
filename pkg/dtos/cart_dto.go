@@ -5,7 +5,7 @@ type CartProductIdDTO struct {
 }
 type CartDTO struct {
 	ID     int64  `json:"id,omitempty"`
-	Items  []Item `json:"items,omitempty"`
+	Items  []Item `json:"items"`
 	UserId int64  `json:"user_id,omitempty"`
 }
 type CartUserDTO struct {

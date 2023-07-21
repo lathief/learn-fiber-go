@@ -15,6 +15,7 @@ type ProductRepository interface {
 	Create(ctx context.Context, product models.Product) error
 	GetAll(ctx context.Context) ([]models.Product, error)
 	GetById(ctx context.Context, id int64) (models.Product, error)
+	GetByIds(ctx context.Context, id []int64) ([]models.Product, error)
 	GetAllByCategoryId(ctx context.Context, categoryId int64) ([]models.Product, error)
 	Update(ctx context.Context, product models.Product) error
 	Delete(ctx context.Context, id int64) error
@@ -88,4 +89,25 @@ func (p *productRepository) GetAllByCategoryId(ctx context.Context, categoryId i
 		return nil, err
 	}
 	return product, err
+}
+func (p *productRepository) GetByIds(ctx context.Context, id []int64) ([]models.Product, error) {
+	var products []models.Product
+	var product models.Product
+	query, args, err := sqlx.In("SELECT id, name, price, description FROM product WHERE id IN (?);", id)
+	if err != nil {
+		return nil, err
+	}
+	query = p.DB.Rebind(query)
+	rows, err := p.DB.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		if err = rows.Scan(&product.ID, &product.Name, &product.Price, &product.Description); err != nil {
+			return nil, err
+		}
+		products = append(products, product)
+	}
+	return products, err
 }

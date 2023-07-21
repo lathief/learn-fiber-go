@@ -10,8 +10,8 @@ type CartRepository interface {
 	Create(ctx context.Context, userId int64) error
 	GetByUserId(ctx context.Context, id int64) (models.Cart, error)
 	GetItemsInCart(ctx context.Context, cartId int64) ([]models.CartItems, error)
-	AddProductsInCart(ctx context.Context, cartItem models.CartItems, cartId int64) error
-	DeleteProductsInCart(ctx context.Context, carId int64) error
+	AddProductsInCart(ctx context.Context, cartItem models.CartItems) error
+	DeleteProductsInCart(ctx context.Context, cartId int64, productId int64) error
 }
 
 func NewCartRepository(DB *sqlx.DB) CartRepository {
@@ -52,7 +52,7 @@ func (c *cartRepository) GetByUserId(ctx context.Context, id int64) (models.Cart
 	return cart, err
 }
 
-func (c *cartRepository) AddProductsInCart(ctx context.Context, cartItem models.CartItems, cartId int64) error {
+func (c *cartRepository) AddProductsInCart(ctx context.Context, cartItem models.CartItems) error {
 	res, err := c.DB.NamedExecContext(ctx, "INSERT INTO cart_items (cart_id, product_id, quantity) VALUES (:cart_id, :product_id, :quantity)", cartItem)
 	if err != nil {
 		return err
@@ -63,8 +63,8 @@ func (c *cartRepository) AddProductsInCart(ctx context.Context, cartItem models.
 	}
 	return nil
 }
-func (c *cartRepository) DeleteProductsInCart(ctx context.Context, productId int64) error {
-	res, err := c.DB.ExecContext(ctx, "DELETE FROM cart_items WHERE product_id = ?", productId)
+func (c *cartRepository) DeleteProductsInCart(ctx context.Context, cartId int64, productId int64) error {
+	res, err := c.DB.ExecContext(ctx, "DELETE FROM cart_items WHERE cart_id = ? AND product_id = ?", cartId, productId)
 	if err != nil {
 		return err
 	}

@@ -18,6 +18,9 @@ type AllProductsDTO struct {
 }
 
 type Item struct {
-	ProductId int64 `json:"product_id"`
-	Quantity  int   `json:"quantity"`
+	ProductId   int64   `json:"product_id"`
+	Name        string  `json:"name"`
+	Description string  `json:"description"`
+	Price       float64 `json:"price"`
+	Quantity    int     `json:"quantity"`
 }

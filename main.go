@@ -29,6 +29,8 @@ func main() {
 	}
 	app := fiber.New(config)
 	middleware.FiberMiddleware(app)
+	authRouter := auth.NewRouter(db)
+	authRouter.Handle(app)
 	productRouter := product.NewRouter(db)
 	productRouter.Handle(app)
 	categoryRouter := category.NewRouter(db)
@@ -37,8 +39,6 @@ func main() {
 	orderRouter.Handle(app)
 	cartRouter := cart.NewRouter(db)
 	cartRouter.Handle(app)
-	authRouter := auth.NewRouter(db)
-	authRouter.Handle(app)
 
 	// Build fiber connection URL
 	fiberConnURL, _ := utils.ConnectionURLBuilder("fiber")

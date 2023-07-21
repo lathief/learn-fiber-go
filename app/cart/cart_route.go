@@ -3,25 +3,31 @@ package cart
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
+	"github.com/lathief/learn-fiber-go/pkg/middleware"
 	"github.com/lathief/learn-fiber-go/pkg/repositories"
 )
 
 type CartRouter struct {
+	Security       middleware.SecurityInterface
 	CartController CartController
 }
 
 func NewRouter(db *sqlx.DB) CartRouter {
 	return CartRouter{
+		Security: middleware.NewSecurityRepo(db),
 		CartController: &cartController{
 			CartUseCase: &cartUseCase{
-				CartRepo: repositories.NewCartRepository(db),
+				ProductRepo: repositories.NewProductRepository(db),
+				CartRepo:    repositories.NewCartRepository(db),
 			},
 		},
 	}
 }
 
 func (cr *CartRouter) Handle(router *fiber.App) {
-	router.Get("/cart/:userid", cr.CartController.GetCartByUserId)
-	router.Put("/cart", cr.CartController.UpdateProductCart)
-	router.Delete("/cart", cr.CartController.DeleteProductCart)
+	cartRouter := router.Group("/cart")
+	cartRouter.Use(cr.Security.Authentication)
+	cartRouter.Get("/", cr.CartController.GetCartByUserId)
+	cartRouter.Put("/", cr.CartController.UpdateProductCart)
+	cartRouter.Delete("/", cr.CartController.DeleteProductCart)
 }
